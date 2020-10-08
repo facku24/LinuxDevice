@@ -1,4 +1,4 @@
-obj-m += static_allocation_module.o dynamic_allocation_module.o
+obj-m += device_file_driver.o
 KDIR = /lib/modules/$(shell uname -r)/build
 
 all:
