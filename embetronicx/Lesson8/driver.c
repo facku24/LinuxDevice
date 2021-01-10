@@ -37,13 +37,13 @@ static struct cdev ext_cdev;
 /*
 ** Functions Prototypes
 */
-static int      __init ext_driver_init(void);
-static void     __exit ext_driver_exit(void);
-static int      ext_open(struct inode * inode, struct file *file);
-static int      ext_release(struct inode * inode, struct file *file);
-static ssize_t  ext_read(struct file *filp, char *buf, size_t len, loff_t *off);
-static ssize_t  ext_write(struct file *filp, const char *buf, size_t len, loff_t *off);
-static long     ext_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+static int      __init etx_driver_init(void);
+static void     __exit etx_driver_exit(void);
+static int      etx_open(struct inode * inode, struct file *file);
+static int      etx_release(struct inode * inode, struct file *file);
+static ssize_t  etx_read(struct file *filp, char *buf, size_t len, loff_t *off);
+static ssize_t  etx_write(struct file *filp, const char *buf, size_t len, loff_t *off);
+static long     etx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 
 /*
 ** File operation structure
@@ -51,17 +51,17 @@ static long     ext_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 static struct file_operations fops =
 {
     .owner          = THIS_MODULE,
-    .read           = ext_read,
-    .write          = ext_write,
-    .open           = ext_open,
-    .unlocked_ioctl = ext_ioctl,
-    .release        = ext_release,
+    .read           = etx_read,
+    .write          = etx_write,
+    .open           = etx_open,
+    .unlocked_ioctl = etx_ioctl,
+    .release        = etx_release,
 };
 
 /*
 ** This function will be called when we open the Device file
 */
-static int ext_open(struct inode *inode, struct file *file)
+static int etx_open(struct inode *inode, struct file *file)
 {
     printk(KERN_INFO "Device File Opened...!!!\n");
     return 0;
@@ -70,7 +70,7 @@ static int ext_open(struct inode *inode, struct file *file)
 /*
 ** This function will be called when we close the Device file
 */
-static int ext_release(struct inode *inode, struct file *file)
+static int etx_release(struct inode *inode, struct file *file)
 {
     printk(KERN_INFO "Device File Closed...!!!\n");
     return 0;
@@ -79,7 +79,7 @@ static int ext_release(struct inode *inode, struct file *file)
 /*
 ** This function will be called when we read the Device file
 */
-static ssize_t ext_read(struct file *filp, char __user *buf, size_t len, loff_t *off)
+static ssize_t etx_read(struct file *filp, char __user *buf, size_t len, loff_t *off)
 {
     printk(KERN_INFO "Read Function\n");
     return 0;
@@ -88,7 +88,7 @@ static ssize_t ext_read(struct file *filp, char __user *buf, size_t len, loff_t 
 /*
 ** This function will be called when we write the Device file
 */
-static ssize_t ext_write(struct file *filp, const char __user *buf, size_t len, loff_t *off)
+static ssize_t etx_write(struct file *filp, const char __user *buf, size_t len, loff_t *off)
 {
     printk(KERN_INFO "Write function\n");
     return 0;
@@ -97,15 +97,16 @@ static ssize_t ext_write(struct file *filp, const char __user *buf, size_t len, 
 /*
 ** This function will be called when we write IOCTL on the Device file
 */
-static long ext_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+static long etx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
     switch(cmd) {
         case WR_VALUE:
             copy_from_user(&value, (int32_t*) arg, sizeof(value));
-            printk(KERN_INFO "Value = %d\n", value);
+            printk(KERN_INFO "Writting value = %d\n", value);
             break;
         case RD_VALUE:
             copy_to_user((int32_t*) arg, &value, sizeof(value));
+            printk(KERN_INFO "Reading value = %d\n", value);
             break;
     }
     return 0;
@@ -114,10 +115,10 @@ static long ext_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 /*
 ** Module Init function
 */
-static int __init ext_driver_init(void)
+static int __init etx_driver_init(void)
 {
     /*Allocating Major Number*/
-    if((alloc_chrdev_region(&dev, 0, 1, "ext_Dev") < 0)){
+    if((alloc_chrdev_region(&dev, 0, 1, "etx_Dev") < 0)){
         printk(KERN_INFO "Cannot allocate major number \n");
         return -1;
     }
@@ -133,10 +134,17 @@ static int __init ext_driver_init(void)
     }
 
     /*Creating struct class*/
-    if((device_create(dev_class, NULL, dev, NULL, "ext_device")) == NULL){
+    if((dev_class = class_create(THIS_MODULE, "etx_class")) == NULL){
+        printk(KERN_INFO "Cannot create the struct class\n");
+        goto r_class;
+    }
+
+    /*Creating struct class*/
+    if((device_create(dev_class, NULL, dev, NULL, "etx_device")) == NULL){
         printk(KERN_INFO "Cannot create the Device 1\n");
         goto r_device;
     }
+
     printk(KERN_INFO "Device Driver Insert... Done!!!\n");
     return 0;
 
@@ -150,7 +158,7 @@ r_class:
 /*
 ** Module exit function
 */
-static void __exit ext_driver_exit(void)
+static void __exit etx_driver_exit(void)
 {
     device_destroy(dev_class, dev);
     class_destroy(dev_class);
@@ -159,8 +167,8 @@ static void __exit ext_driver_exit(void)
     printk(KERN_INFO "Device Driver Remove... Done!!!\n");
 }
 
-module_init(ext_driver_init);
-module_exit(ext_driver_exit);
+module_init(etx_driver_init);
+module_exit(etx_driver_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kunix");
